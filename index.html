@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Sebaran Lulusan Pasca Ilkom Angkatan 61</title>
 
+    <!-- Favicon — ganti favicon-ipb.png dengan file logo resmi IPB University yang Anda unduh -->
+    <link rel="icon" type="image/png" sizes="32x32" href="https://www.alumniipbpedia.id/includes/images/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://www.alumniipbpedia.id/includes/images/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon-ipb.png">
+    <link rel="shortcut icon" href="favicon-ipb.png">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -41,7 +47,11 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-        html, body { width: 100%; height: 100%; overflow: hidden; background: var(--gm-bg); color: var(--gm-text); }
+        html, body {
+            width: 100%; height: 100%; overflow: hidden; background: var(--gm-bg); color: var(--gm-text);
+            overscroll-behavior: none; /* cegah gesture "pull-to-refresh" browser mobile me-reload halaman */
+            position: fixed; /* kunci viewport, cegah scroll chaining yang memicu refresh gesture */
+        }
         button, input, textarea { font-family: inherit; }
 
         /* ==============================
@@ -69,7 +79,7 @@
            APP SHELL / MAP
            ============================== */
         #app-container { width: 100%; height: 100%; position: relative; }
-        #map { width: 100%; height: 100%; z-index: 1; background: var(--gm-bg); }
+        #map { width: 100%; height: 100%; z-index: 1; background: var(--gm-bg); overscroll-behavior: none; touch-action: none; }
 
         /* ---- Top search bar (Google Maps style) ---- */
         .topbar-wrap { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 1000; display: flex; justify-content: center; }
@@ -137,15 +147,27 @@
         .drawer-item:hover { background: var(--gm-panel-bg); }
         .drawer-item i { width: 20px; text-align: center; color: var(--gm-text-muted); font-size: 16px; }
 
-        /* ---- Floating action button ---- */
-        .fab-add {
+        /* ---- Floating action button stack ---- */
+        .fab-stack {
             position: absolute; right: 16px; bottom: 132px; z-index: 900;
-            width: 52px; height: 52px; border-radius: 50%; border: none;
-            background: var(--gm-blue); color: #fff; font-size: 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
+        }
+        .fab-add {
+            width: 46px; height: 46px; border-radius: 50%; border: none;
+            background: var(--gm-blue); color: #fff; font-size: 18px;
             display: flex; align-items: center; justify-content: center;
             box-shadow: var(--elev-2); cursor: pointer; transition: background .15s ease, box-shadow .15s ease;
         }
         .fab-add:hover { background: var(--gm-blue-dark); box-shadow: var(--elev-3); }
+        .fab-secondary {
+            width: 42px; height: 42px; border-radius: 50%; border: none;
+            background: var(--gm-surface); color: var(--gm-text-muted); font-size: 16px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--elev-1); cursor: pointer; transition: background .15s ease, box-shadow .15s ease;
+        }
+        .fab-secondary:hover { background: var(--gm-panel-bg); }
+        .fab-reload.spinning i { animation: fabSpin .7s linear; }
+        @keyframes fabSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
         /* Leaflet zoom control restyle */
         .leaflet-control-zoom { border: none !important; box-shadow: var(--elev-1) !important; border-radius: var(--radius-sm) !important; overflow: hidden; margin-bottom: 24px !important; margin-right: 12px !important; }
@@ -256,7 +278,9 @@
            ============================== */
         @media (max-width: 640px) {
             .search-box { height: 46px; }
-            .fab-add { bottom: 108px; right: 12px; width: 48px; height: 48px; font-size: 18px; }
+            .fab-stack { bottom: 108px; right: 12px; gap: 10px; }
+            .fab-add { width: 44px; height: 44px; font-size: 16px; }
+            .fab-secondary { width: 40px; height: 40px; font-size: 15px; }
             .leaflet-control-zoom { margin-bottom: 16px !important; margin-right: 10px !important; }
 
             .modal-overlay { align-items: flex-end; padding: 0; }
@@ -325,8 +349,12 @@
             </nav>
         </div>
 
-        <!-- FAB: tambah data -->
-        <button class="fab-add" onclick="openUserModal()" title="Tambah Data Saya"><i class="fa-solid fa-user-plus"></i></button>
+        <!-- FAB stack: tambah data / lokasi saya / reload data -->
+        <div class="fab-stack">
+            <button class="fab-add" onclick="openUserModal()" title="Tambah Data Saya"><i class="fa-solid fa-plus"></i></button>
+            <button class="fab-secondary" id="fab-locate" onclick="locateMe()" title="Lokasi Saya"><i class="fa-solid fa-location-crosshairs"></i></button>
+            <button class="fab-secondary fab-reload" id="fab-reload" onclick="reloadData()" title="Reload Data"><i class="fa-solid fa-rotate"></i></button>
+        </div>
 
         <div id="map"></div>
     </div>
@@ -422,6 +450,8 @@
         let map, pickerMap, pickerMarker;
         let currentAdminPassword = "";
         let alumniDataCache = [];
+        let markersLayer;
+        let userLocationMarker;
 
         // Inisialisasi Peta Utama — pakai tile OpenStreetMap gratis, tanpa API key
         function initMainMap() {
@@ -431,6 +461,7 @@
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
                 maxZoom: 19
             }).addTo(map);
+            markersLayer = L.layerGroup().addTo(map);
         }
 
         // Fetch Data Publik (Status Approved saja)
@@ -448,6 +479,7 @@
         }
 
         function renderMapMarkers(data) {
+            markersLayer.clearLayers();
             document.getElementById('header-stat').textContent = `${data.length} Alumni Terverifikasi`;
             data.forEach(item => {
                 const icon = L.divIcon({
@@ -455,9 +487,37 @@
                     html: `<div class="custom-pin"><img src="${item.foto_url}" onerror="this.src='https://via.placeholder.com/100'"></div>`,
                     iconSize: [34, 34], iconAnchor: [17, 34]
                 });
-                const marker = L.marker([item.lat, item.lng], { icon: icon }).addTo(map);
+                const marker = L.marker([item.lat, item.lng], { icon: icon }).addTo(markersLayer);
                 marker.on('click', () => openProfileModal(item));
             });
+        }
+
+        // ---- Tombol "Lokasi Saya" ----
+        function locateMe() {
+            if (!navigator.geolocation) {
+                alert("Geolocation tidak didukung oleh browser ini.");
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    map.flyTo([latitude, longitude], 14, { duration: 0.8 });
+                    if (userLocationMarker) map.removeLayer(userLocationMarker);
+                    userLocationMarker = L.circleMarker([latitude, longitude], {
+                        radius: 8, color: "#fff", weight: 3, fillColor: "#1a73e8", fillOpacity: 1
+                    }).addTo(map);
+                },
+                (err) => { alert("Tidak bisa mengambil lokasi Anda: " + err.message); },
+                { enableHighAccuracy: true, timeout: 8000 }
+            );
+        }
+
+        // ---- Tombol "Reload Data" ----
+        async function reloadData() {
+            const btn = document.getElementById('fab-reload');
+            btn.classList.add('spinning');
+            await loadPublicMarkers();
+            setTimeout(() => btn.classList.remove('spinning'), 500);
         }
 
         function openProfileModal(item) {
