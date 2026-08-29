@@ -240,7 +240,14 @@
         .place-row { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13px; color: var(--gm-text-muted); margin-top: 12px; }
         .place-row i { color: var(--gm-text-muted); width: 16px; text-align: center; }
         .place-desc { font-size: 13px; color: var(--gm-text); line-height: 1.55; background: var(--gm-panel-bg); padding: 12px 14px; border-radius: var(--radius-sm); margin-top: 14px; text-align: left; }
-        .place-actions { padding: 16px 20px 20px; }
+        .place-actions { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 10px; }
+        .btn-gmaps-secondary {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; height: 44px; border-radius: var(--radius-pill);
+            background: var(--gm-blue-tint); color: var(--gm-blue-dark); font-weight: 500; font-size: 14px;
+            text-decoration: none; border: none; cursor: pointer; transition: background .15s ease;
+        }
+        .btn-gmaps-secondary:hover { background: #dbe8fd; }
 
         .btn-gmaps-primary {
             display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -395,6 +402,7 @@
             </div>
             <div class="place-actions">
                 <a id="m-wa" href="#" target="_blank" class="btn-gmaps-primary"><i class="fa-brands fa-whatsapp"></i> Chat WhatsApp</a>
+                <a id="m-linkedin" href="#" target="_blank" class="btn-gmaps-secondary" style="display:none;"><i class="fa-brands fa-linkedin"></i> Lihat Profil LinkedIn</a>
             </div>
         </div>
     </div>
@@ -414,6 +422,7 @@
                     <div class="form-group"><label>Nomor WhatsApp (Contoh: 628123...)</label><input type="text" id="u-wa" class="form-control" required></div>
                     <div class="form-group"><label>Kota Domisili</label><input type="text" id="u-kota" class="form-control" required placeholder="Contoh: Jakarta"></div>
                 </div>
+                <div class="form-group"><label>Link Profil LinkedIn (Opsional)</label><input type="url" id="u-linkedin" class="form-control" placeholder="https://www.linkedin.com/in/nama-anda"></div>
                 <div class="form-group"><label>URL Foto Profil (Direct Image Link)</label><input type="url" id="u-foto" class="form-control" placeholder="https://..." required></div>
                 <div class="form-group"><label>Deskripsi Singkat / Bio</label><textarea id="u-deskripsi" class="form-control" rows="2" required></textarea></div>
 
@@ -468,7 +477,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         /* CONFIGURATION: URL Google Apps Script Web App Anda — TIDAK DIUBAH */
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwHjiULQoA0ar9roRNJF_EBwgShkaEW6b-Q1-sSuJB5JTZGfvEn6dotCYjrvmFlXsbhQw/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxSG5s2SMJHcmXVO7HFAxGTPOykhLILTJgwmenoLfwup-icsyeBrtZwS_LOuxGLPA6WnA/exec";
 
         let map, pickerMap, pickerMarker;
         let currentAdminPassword = "";
@@ -560,6 +569,15 @@
             document.getElementById('m-kota').textContent = item.kota;
             document.getElementById('m-deskripsi').textContent = item.deskripsi;
             document.getElementById('m-wa').href = `https://wa.me/${item.whatsapp}`;
+
+            const linkedinBtn = document.getElementById('m-linkedin');
+            if (item.linkedin && item.linkedin.trim() !== "") {
+                linkedinBtn.href = item.linkedin;
+                linkedinBtn.style.display = 'flex';
+            } else {
+                linkedinBtn.style.display = 'none';
+            }
+
             document.getElementById('profile-modal').classList.add('active');
         }
 
@@ -643,6 +661,7 @@
                     jabatan: document.getElementById('u-jabatan').value,
                     whatsapp: document.getElementById('u-wa').value,
                     kota: document.getElementById('u-kota').value,
+                    linkedin: document.getElementById('u-linkedin').value,
                     foto_url: document.getElementById('u-foto').value,
                     deskripsi: document.getElementById('u-deskripsi').value,
                     lat: document.getElementById('u-lat').value,
@@ -718,7 +737,10 @@
                 const tr = document.createElement('tr');
                 const badgeClass = item.status === 'Approved' ? 'badge-approved' : (item.status === 'Pending' ? 'badge-pending' : 'badge-rejected');
                 tr.innerHTML = `
-                    <td data-label="Nama Alumni"><b>${item.nama}</b><br><small>${item.whatsapp}</small></td>
+                    <td data-label="Nama Alumni">
+                        <b>${item.nama}</b><br><small>${item.whatsapp}</small>
+                        ${item.linkedin ? `<br><a href="${item.linkedin}" target="_blank" style="font-size:11px;color:var(--gm-blue);"><i class="fa-brands fa-linkedin"></i> LinkedIn</a>` : ''}
+                    </td>
                     <td data-label="Instansi & Jabatan">${item.jabatan}<br><small>${item.instansi}</small></td>
                     <td data-label="Kota">${item.kota}</td>
                     <td data-label="Status"><span class="badge ${badgeClass}">${item.status}</span></td>
