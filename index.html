@@ -126,7 +126,7 @@
         .search-result-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; transition: background .12s ease; }
         .search-result-item:hover { background: var(--gm-panel-bg); }
         .search-result-item + .search-result-item { border-top: 1px solid var(--gm-panel-bg); }
-        .search-result-item img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: var(--gm-panel-bg); }
+        .search-result-item img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; object-position: top center; flex-shrink: 0; background: var(--gm-panel-bg); }
         .sr-name { font-size: 13.5px; font-weight: 500; color: var(--gm-text); }
         .sr-sub { font-size: 12px; color: var(--gm-text-muted); margin-top: 1px; }
         .search-empty { padding: 16px 14px; font-size: 13px; color: var(--gm-text-muted); text-align: center; }
@@ -194,7 +194,7 @@
             border: 3px solid #fff; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
             display: flex; align-items: center; justify-content: center; box-shadow: var(--elev-1);
         }
-        .custom-pin img { width: 24px; height: 24px; border-radius: 50%; transform: rotate(45deg); object-fit: cover; }
+        .custom-pin img { width: 24px; height: 24px; border-radius: 50%; transform: rotate(45deg); object-fit: cover; object-position: top center; }
 
         /* ==============================
            MODAL / SHEET SYSTEM
@@ -225,14 +225,21 @@
             border-radius: var(--radius-card); box-shadow: var(--elev-3);
             max-height: 90vh; overflow-y: auto; position: relative;
         }
-        .place-cover { width: 100%; height: 150px; background: var(--gm-panel-bg); overflow: hidden; border-radius: var(--radius-card) var(--radius-card) 0 0; }
-        .place-cover img { width: 100%; height: 100%; object-fit: cover; }
-        .place-body { padding: 18px 20px 8px; }
+        .place-header-bg {
+            height: 68px; border-radius: var(--radius-card) var(--radius-card) 0 0;
+            background: linear-gradient(135deg, var(--gm-blue-tint) 0%, #eef4fe 100%);
+        }
+        .place-avatar-wrap { display: flex; justify-content: center; margin-top: -46px; }
+        .place-avatar {
+            width: 92px; height: 92px; border-radius: 50%; object-fit: cover; object-position: top center;
+            border: 4px solid var(--gm-surface); box-shadow: var(--elev-1); background: var(--gm-panel-bg);
+        }
+        .place-body { padding: 10px 20px 8px; text-align: center; }
         .place-body h3 { font-size: 19px; font-weight: 500; }
         .place-sub { font-size: 13.5px; color: var(--gm-blue); font-weight: 500; margin-top: 3px; }
-        .place-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--gm-text-muted); margin-top: 12px; }
+        .place-row { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13px; color: var(--gm-text-muted); margin-top: 12px; }
         .place-row i { color: var(--gm-text-muted); width: 16px; text-align: center; }
-        .place-desc { font-size: 13px; color: var(--gm-text); line-height: 1.55; background: var(--gm-panel-bg); padding: 12px 14px; border-radius: var(--radius-sm); margin-top: 14px; }
+        .place-desc { font-size: 13px; color: var(--gm-text); line-height: 1.55; background: var(--gm-panel-bg); padding: 12px 14px; border-radius: var(--radius-sm); margin-top: 14px; text-align: left; }
         .place-actions { padding: 16px 20px 20px; }
 
         .btn-gmaps-primary {
@@ -378,7 +385,8 @@
     <div class="modal-overlay" id="profile-modal">
         <div class="place-card">
             <button class="close-btn" onclick="closeModal('profile-modal')"><i class="fa-solid fa-xmark"></i></button>
-            <div class="place-cover"><img id="m-foto" src=""></div>
+            <div class="place-header-bg"></div>
+            <div class="place-avatar-wrap"><img id="m-foto" class="place-avatar" src=""></div>
             <div class="place-body">
                 <h3 id="m-nama">-</h3>
                 <p class="place-sub" id="m-instansi">-</p>
